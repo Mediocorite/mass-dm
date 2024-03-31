@@ -1,0 +1,25 @@
+version: "3.3"
+services:
+  api:
+    build: ./instagrapi-rest
+    stdin_open: true
+    tty: true
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+  app:
+    platform: "linux/amd64"
+    build:
+      context: ./instagrapi-ui
+      dockerfile: ./Dockerfile
+      args:
+        NEXT_PUBLIC_CLIENTVAR: "clientvar"
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    image: t3-app
+    environment:
+      - DATABASE_URL=database_url_goes_here
+    volumes:
+      - .:/app

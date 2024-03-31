@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
+import { api } from "~/trpc/react";
 
 interface Account {
   proxy: string;
@@ -17,18 +18,13 @@ const colors = [
 ];
 
 export default function AddAccount() {
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  // const [accounts, setAccounts] = useState<Account[]>([]);
 
-  useEffect(() => {
-    const storedAccounts = localStorage.getItem("accounts");
-    if (storedAccounts) {
-      setAccounts(JSON.parse(storedAccounts));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("accounts", JSON.stringify(accounts));
-  }, [accounts]);
+  const { data: accounts, isLoading } = api.exAcc.listAllExternalAcc.useQuery();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [proxy, setProxy] = useState("");
+  const { mutate, error } = api.exAcc.addExternalAcc.useMutation();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -36,9 +32,8 @@ export default function AddAccount() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const proxy = formData.get("proxy") as string;
-
-    const newAccount: Account = { proxy, email, password };
-    setAccounts([...accounts, newAccount]);
+    const returnVal = mutate({ email, password, proxy });
+    console.log(returnVal);
   };
   return (
     <div className="flex items-center justify-center">
@@ -50,8 +45,8 @@ export default function AddAccount() {
             </h2>
           </div>
           <div className="flex p-16">
-            <div className="bg-blue w-3/4 p-24">
-              {accounts.length == 0 && (
+            <div className="w-3/4 p-24">
+              {!isLoading && accounts?.length == 0 && (
                 <div className="flex flex-col items-center justify-center">
                   <h1 className="mb-4 text-4xl font-bold">No Accounts Found</h1>
                   <p className="mb-8 text-lg text-gray-600">
@@ -62,22 +57,26 @@ export default function AddAccount() {
                   </a>
                 </div>
               )}
-              {accounts.map((data, index) => (
-                <div className="flex rounded-md border p-4 hover:border-blue-500">
-                  <div className="flex items-center justify-center">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-full text-white ${colors[index % colors.length]}`}
-                    >
-                      <span className="text-4xl">{index + 1}</span>
+              {!isLoading &&
+                accounts?.map((data, index) => (
+                  <div
+                    key={index}
+                    className="flex rounded-md border p-4 hover:border-blue-500"
+                  >
+                    <div className="flex items-center justify-center">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-full text-white ${colors[index % colors.length]}`}
+                      >
+                        <span className="text-4xl">{index + 1}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col items-start justify-center p-4">
+                      <span className="font-semibold">{data.email}</span>
+                      <span>Proxy: {data.proxy}</span>
                     </div>
                   </div>
-
-                  <div className="flex flex-col items-start justify-center p-4">
-                    <span className="font-semibold">{data.email}</span>
-                    <span>Proxy: {data.proxy}</span>
-                  </div>
-                </div>
-              ))}
+                ))}
             </div>
             <div className="mt-8 flex w-1/4 items-center justify-center  ">
               <form className="space-y-6" onSubmit={handleSubmit}>
@@ -153,12 +152,12 @@ export default function AddAccount() {
                     </span>
                     Add Account Details
                   </button>
-                  <button
+                  {/* <button
                     disabled={accounts.length == 0}
                     className="group relative flex w-full justify-center rounded-md border border-transparent bg-green-300 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     Send a Direct Message
-                  </button>
+                  </button> */}
                 </div>
               </form>
             </div>
