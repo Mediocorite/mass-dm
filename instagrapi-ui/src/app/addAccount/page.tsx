@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
 interface Account {
@@ -18,12 +18,9 @@ const colors = [
 ];
 
 export default function AddAccount() {
-  // const [accounts, setAccounts] = useState<Account[]>([]);
+  const router = useRouter();
 
   const { data: accounts, isLoading } = api.exAcc.listAllExternalAcc.useQuery();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [proxy, setProxy] = useState("");
   const { mutate, error } = api.exAcc.addExternalAcc.useMutation();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -152,12 +149,15 @@ export default function AddAccount() {
                     </span>
                     Add Account Details
                   </button>
-                  {/* <button
-                    disabled={accounts.length == 0}
+                  <button
+                    disabled={
+                      isLoading || (!isLoading && accounts?.length == 0)
+                    }
                     className="group relative flex w-full justify-center rounded-md border border-transparent bg-green-300 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    onClick={() => router.push("/directmessage")}
                   >
                     Send a Direct Message
-                  </button> */}
+                  </button>
                 </div>
               </form>
             </div>
