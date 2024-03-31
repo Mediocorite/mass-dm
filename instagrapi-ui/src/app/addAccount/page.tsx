@@ -2,12 +2,6 @@
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
-interface Account {
-  proxy: string;
-  email: string;
-  password: string;
-}
-
 const colors = [
   "bg-red-500",
   "bg-blue-500",
