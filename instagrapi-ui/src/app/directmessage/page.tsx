@@ -14,10 +14,10 @@ export default function DirectMessage() {
   return (
     <div className="flex h-screen items-center justify-center bg-gray-100">
       <form
-        action={(formData) => {
+        action={async (formData) => {
           const message = formData.get("directMessage") as string;
           console.log("This is the message " + message);
-          sendDm({ targetAccounts: accounts, message });
+          await sendDm({ targetAccounts: accounts, message });
         }}
         className="rounded-lg bg-white p-8 shadow-lg"
       >

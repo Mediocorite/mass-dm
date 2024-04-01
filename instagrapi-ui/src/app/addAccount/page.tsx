@@ -15,10 +15,10 @@ export default function AddAccount() {
   const router = useRouter();
 
   const { data: accounts, isLoading } = api.exAcc.listAllExternalAcc.useQuery();
-  const { mutate, error } = api.exAcc.addExternalAcc.useMutation();
+  const { mutate } = api.exAcc.addExternalAcc.useMutation();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+    // event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
