@@ -1,5 +1,6 @@
 import axios from "axios";
 import { z } from "zod";
+import { env } from "~/env";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
@@ -32,6 +33,31 @@ export const sendDmRouter = createTRPCRouter({
       try {
         const response = await axios.post(""); // Making the API call
         return response.data;
+      } catch (error) {
+        throw new Error(`Failed to fetch external data: ${error}`);
+      }
+    }),
+  getSessionIDwithLogin: protectedProcedure
+    .input(
+      z.object({
+        email: z.string(),
+        password: z.string(),
+        proxy: z.string(),
+      }),
+    )
+    .query(async (input) => {
+      try {
+        const response = await axios
+          .post(env.REST_API_URL + "/auth/login", {
+            ...input,
+          })
+          .then(function (response) {
+            console.log(response.data);
+          })
+          .catch(function (error) {
+            console.log(error);
+          }); // Making the API call
+        return response;
       } catch (error) {
         throw new Error(`Failed to fetch external data: ${error}`);
       }

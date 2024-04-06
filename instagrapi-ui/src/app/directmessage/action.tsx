@@ -89,5 +89,7 @@ async function getAccountIDbyName(
 }
 
 async function getSessionId(accountDetails: Account): Promise<string> {
+  const something = await api.senddm.getSessionIDwithLogin(accountDetails);
+  console.log(JSON.stringify(something));
   return "something";
 }

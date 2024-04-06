@@ -1,5 +1,6 @@
 "use client";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useState } from "react";
 import { api } from "~/trpc/react";
 
 const colors = [
@@ -12,20 +13,33 @@ const colors = [
 ];
 
 export default function AddAccount() {
-  const router = useRouter();
+  const {
+    data: accounts,
+    isLoading,
+    refetch,
+  } = api.exAcc.listAllExternalAcc.useQuery();
 
-  const { data: accounts, isLoading } = api.exAcc.listAllExternalAcc.useQuery();
-  const { mutate } = api.exAcc.addExternalAcc.useMutation();
+  const { mutate: addAccount } = api.exAcc.addExternalAcc.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
+  const { mutate: deleteAccount } = api.exAcc.removeAccByID.useMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    // event.preventDefault();
+    event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
     const proxy = formData.get("proxy") as string;
-    const returnVal = mutate({ email, password, proxy });
-    console.log(returnVal);
+    addAccount({ email, password, proxy });
   };
+
   return (
     <div className="flex items-center justify-center">
       <div className="flex min-h-screen w-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
@@ -52,20 +66,27 @@ export default function AddAccount() {
                 accounts?.map((data, index) => (
                   <div
                     key={index}
-                    className="flex rounded-md border p-4 hover:border-blue-500"
+                    className="flex items-center justify-between rounded-md border p-4 hover:border-blue-500"
                   >
-                    <div className="flex items-center justify-center">
-                      <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-full text-white ${colors[index % colors.length]}`}
-                      >
-                        <span className="text-4xl">{index + 1}</span>
+                    <div className="flex">
+                      <div className="flex items-center justify-center">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-full text-white ${colors[index % colors.length]}`}
+                        >
+                          <span className="text-4xl">{index + 1}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-start justify-center p-4">
+                        <span className="font-semibold">{data.email}</span>
+                        <span>Proxy: {data.proxy}</span>
                       </div>
                     </div>
-
-                    <div className="flex flex-col items-start justify-center p-4">
-                      <span className="font-semibold">{data.email}</span>
-                      <span>Proxy: {data.proxy}</span>
-                    </div>
+                    <span
+                      onClick={() => deleteAccount({ id: data?.id })}
+                      className="cursor-pointer text-4xl"
+                    >
+                      ❌
+                    </span>
                   </div>
                 ))}
             </div>
@@ -143,15 +164,12 @@ export default function AddAccount() {
                     </span>
                     Add Account Details
                   </button>
-                  <button
-                    disabled={
-                      isLoading || (!isLoading && accounts?.length == 0)
-                    }
+                  <Link
                     className="group relative flex w-full justify-center rounded-md border border-transparent bg-green-300 px-4 py-2 text-sm font-medium text-white hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    onClick={() => router.push("/directmessage")}
+                    href={"/directmessage"}
                   >
-                    Send a Direct Message
-                  </button>
+                    Send direct message
+                  </Link>
                 </div>
               </form>
             </div>
