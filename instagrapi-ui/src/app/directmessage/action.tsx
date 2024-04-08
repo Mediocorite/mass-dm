@@ -33,6 +33,7 @@ export async function sendDm(dmInfo: DMinfo) {
     }
   }
 }
+
 async function processAccounts(
   accountsInfo: Account[],
   targetAccounts: string[],
@@ -41,6 +42,7 @@ async function processAccounts(
     accountsInfo.map(async (details) => await getSessionId(details)),
   );
 
+  console.log(JSON.stringify(sessionIDs));
   // Filter out any potential undefined values
   const validSessionIDs = sessionIDs.filter(
     (id): id is string => id !== undefined,

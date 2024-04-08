@@ -5,38 +5,6 @@ import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
 export const sendDmRouter = createTRPCRouter({
-  sendDm: protectedProcedure
-    .input(
-      z.object({
-        message: z.string(),
-        targetAccount: z.number(),
-        accountSession: z.string(),
-      }),
-    )
-    .query(async (input) => {
-      try {
-        const response = await axios.post(""); // Making the API call
-        return response.data;
-      } catch (error) {
-        throw new Error(`Failed to fetch external data: ${error}`);
-      }
-    }),
-
-  getAccountIDByName: protectedProcedure
-    .input(
-      z.object({
-        targetAccount: z.string(),
-        accountSession: z.string(),
-      }),
-    )
-    .query(async (input) => {
-      try {
-        const response = await axios.post(""); // Making the API call
-        return response.data;
-      } catch (error) {
-        throw new Error(`Failed to fetch external data: ${error}`);
-      }
-    }),
   getSessionIDwithLogin: protectedProcedure
     .input(
       z.object({
@@ -58,6 +26,39 @@ export const sendDmRouter = createTRPCRouter({
             console.log(error);
           }); // Making the API call
         return response;
+      } catch (error) {
+        throw new Error(`Failed to fetch external data: ${error}`);
+      }
+    }),
+
+  getAccountIDByName: protectedProcedure
+    .input(
+      z.object({
+        targetAccount: z.string(),
+        accountSession: z.string(),
+      }),
+    )
+    .query(async (input) => {
+      try {
+        const response = await axios.post(""); // Making the API call
+        return response.data;
+      } catch (error) {
+        throw new Error(`Failed to fetch external data: ${error}`);
+      }
+    }),
+
+  sendDm: protectedProcedure
+    .input(
+      z.object({
+        message: z.string(),
+        targetAccount: z.number(),
+        accountSession: z.string(),
+      }),
+    )
+    .query(async (input) => {
+      try {
+        const response = await axios.post(""); // Making the API call
+        return response.data;
       } catch (error) {
         throw new Error(`Failed to fetch external data: ${error}`);
       }
