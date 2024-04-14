@@ -30,7 +30,6 @@ export const accountRouter = createTRPCRouter({
           },
           data: formData,
         });
-        debugger;
         if (
           response.status === 200 &&
           response.data &&
@@ -41,32 +40,55 @@ export const accountRouter = createTRPCRouter({
           throw new Error("Login failed. Please check your credentials.");
         }
       } catch (error) {
-        debugger;
-        console.error("Login error:", error);
-
-        if (axios.isAxiosError(error)) {
-          // Now we know this is an Axios error, and we can access the specific properties
-          if (error.response) {
-            console.log("Error Data:", error.response.data);
-            console.log("Error Status:", error.response.status);
-            console.log("Error Headers:", error.response.headers);
-          } else if (error.request) {
-            console.log("Error Request:", error.request);
-          } else {
-            console.log("Error Message:", error.message);
-          }
-          console.log("Error Config:", error.config);
-        } else if (error instanceof Error) {
-          // Generic error handling if it's not an AxiosError
-          console.log("Error", error.message);
+        if (axios.isAxiosError(error) && error.response) {
+          console.error("Login error:", error.response.data);
         } else {
-          // This block handles cases where the error isn't an instance of Error (very rare)
-          console.log("An unexpected error occurred");
+          console.error("Login error:", error);
         }
+        throw new Error(
+          "An error occurred during login. Please try again later.",
+        );
       }
-      debugger;
-      throw new Error(
-        "An error occurred during login. Please try again later.",
-      );
+    }),
+  instagramGetUserID: protectedProcedure
+    .input(
+      z.object({
+        sessionID: z.string(),
+        username: z.string(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const formData = qs.stringify({
+        sessionid: input.sessionID,
+        username: input.username,
+      });
+      try {
+        const response = await axios({
+          method: "post",
+          url: `${env.REST_API_URL}/user/id_from_username`,
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          data: formData,
+        });
+        if (
+          response.status === 200 &&
+          response.data &&
+          typeof response.data.pk === "string"
+        ) {
+          return response.data.pk;
+        } else {
+          throw new Error("Can't retrieve user with the given name.");
+        }
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response) {
+          console.error("HTTP Request error:", error.response.data);
+        } else {
+          console.error("HTTP Request error:", error);
+        }
+        throw new Error(
+          "An error occurred during login. Please try again later.",
+        );
+      }
     }),
 });

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { api } from "~/trpc/react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 const colors = [
   "bg-red-500",
   "bg-blue-500",
@@ -25,9 +26,14 @@ export default function AddAccount() {
         toast.success("Account successfully added!");
       },
       onError: (error) => {
-        toast.error(
-          error?.message || "An error occurred while adding the account.",
-        );
+        debugger;
+        if (axios.isAxiosError(error) && error.response) {
+          toast.error(
+            error?.message || "An error occurred while adding the account.",
+          );
+        } else {
+          console.error("Login error:", error);
+        }
       },
     });
 
@@ -56,8 +62,8 @@ export default function AddAccount() {
     const password = formData.get("password") as string;
     const proxy = formData.get("proxy") as string;
     try {
-      const sessionID = await instagramLogin({ username, password, proxy });
-      addAccount({ username, password, proxy, sessionID });
+      const sessionid = await instagramLogin({ username, password, proxy });
+      addAccount({ username, password, proxy, sessionid });
     } catch (error) {
       console.error("Failed to login:", error);
       toast.error(
@@ -156,9 +162,8 @@ export default function AddAccount() {
                       name="proxy"
                       type="proxy"
                       autoComplete="current-proxy"
-                      required
                       className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                      placeholder="Proxy Details"
+                      placeholder="Proxy details"
                     />
                   </div>
                 </div>

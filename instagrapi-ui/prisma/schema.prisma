@@ -72,6 +72,7 @@ model ExternalAccount {
   password String
   // If each ExternalAccount is associated with a User
   userId   String?
+  sessionid String
   user     User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 

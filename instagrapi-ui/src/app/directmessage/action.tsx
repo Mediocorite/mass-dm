@@ -3,9 +3,17 @@
 import { api } from "~/trpc/server";
 
 interface Account {
+  id: number;
   proxy: string;
-  email: string;
+  username: string;
   password: string;
+  userId: string | null;
+  sessionid: string;
+}
+
+interface GetAccountID {
+  sessionID: string;
+  username: string;
 }
 
 interface DMinfo {
@@ -14,84 +22,58 @@ interface DMinfo {
 }
 
 export async function sendDm(dmInfo: DMinfo) {
-  const accountsInfo = await api.exAcc.listAllExternalAcc();
-  const { message, targetAccounts } = dmInfo;
+  const accounts: Account[] = await api.database.listAllExternalAcc();
+  const targetAccountIDs: string[] = await Promise.all(
+    dmInfo.targetAccounts.map(async (target, index) => {
+      const sessionID = accounts[index % accounts.length]?.sessionid;
+      if (sessionID) {
+        try {
+          const userID = await api.account.instagramGetUserID({
+            username: target,
+            sessionID: sessionID,
+          });
+          return userID;
+        } catch (error) {
+          console.error(`Failed to retrieve ID for ${target}:`, error);
+          return null;
+        }
+      }
+      return null;
+    }),
+  ).then((ids) => ids.filter((id) => id !== null));
+  const maxUsersPerSession = 50;
+  let sessionIndex = 0;
+  let userCount = 0;
 
-  const { sessionIDs, targetAccountsIds } = await processAccounts(
-    accountsInfo,
-    targetAccounts,
-  );
+  for (let i = 0; i < targetAccountIDs.length; i++) {
+    if (!accounts[sessionIndex]) {
+      sessionIndex = 0; // Reset session index if it goes out of bound
+    }
 
-  let currentAccountIndex = 0;
-  for (let i = 0; i < targetAccountsIds.length; i++) {
-    const account = sessionIDs[currentAccountIndex % sessionIDs.length];
+    const sessionID = accounts[sessionIndex]?.sessionid;
+    if (!sessionID) {
+      console.error(
+        `Session ID not available for session index ${sessionIndex}`,
+      );
+      continue; // Skip this iteration if no valid session ID is found
+    }
 
-    await sendMessage(account, message, targetAccountsIds[i]);
+    const end = Math.min(i + maxUsersPerSession, targetAccountIDs.length);
+    const chunk = targetAccountIDs.slice(i, end);
+    try {
+      await api.message.sendDMtoUser({
+        sessionID: sessionID,
+        text: dmInfo.message,
+        user_ids: chunk,
+      });
+    } catch (error) {
+      console.error(`Failed to send DM using session ${sessionID}:`, error);
+    }
 
-    if ((i + 1) % 50 === 0) {
-      currentAccountIndex++;
+    userCount += chunk.length;
+    if (userCount >= maxUsersPerSession || i >= targetAccountIDs.length - 1) {
+      sessionIndex++;
+      userCount = 0;
     }
   }
-}
-
-async function processAccounts(
-  accountsInfo: Account[],
-  targetAccounts: string[],
-) {
-  const sessionIDs = await Promise.all(
-    accountsInfo.map(async (details) => await getSessionId(details)),
-  );
-
-  console.log(JSON.stringify(sessionIDs));
-  // Filter out any potential undefined values
-  const validSessionIDs = sessionIDs.filter(
-    (id): id is string => id !== undefined,
-  );
-
-  let targetAccountsIds: number[] = []; // No need for | undefined since we're always assigning an array
-  if (validSessionIDs.length > 0) {
-    const accountSession = validSessionIDs[0]; // Using the first session ID
-    const potentialIds = await Promise.all(
-      targetAccounts.map(async (name) => {
-        if (accountSession)
-          return await getAccountIDbyName(accountSession, name);
-      }),
-    );
-
-    // Filter out undefined values after resolving Promises
-    targetAccountsIds = potentialIds.filter(
-      (id): id is number => id !== undefined,
-    );
-  } else {
-    // Handle the case where no valid session IDs are found
-    console.error("No valid session IDs found.");
-  }
-
-  return { sessionIDs, targetAccountsIds };
-}
-
-async function sendMessage(
-  account: string | undefined,
-  message: string,
-  targetAccount: number | undefined,
-): Promise<void> {
-  if (account)
-    console.log(
-      `Sending message from ${account} to ${targetAccount}: ${message}`,
-    );
-  // Implement the actual sending logic here.
-}
-
-async function getAccountIDbyName(
-  accountSession: string,
-  targetAccount: string,
-): Promise<number> {
-  // Logic for getting account id
-  return 15;
-}
-
-async function getSessionId(accountDetails: Account): Promise<string> {
-  const something = await api.senddm.getSessionIDwithLogin(accountDetails);
-  console.log(JSON.stringify(something));
-  return "something";
 }

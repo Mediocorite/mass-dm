@@ -4,21 +4,37 @@ import { sendDm } from "./action";
 
 export default function DirectMessage() {
   const [targetAccounts, setTargetAccounts] = useState("");
-
+  const [messageStatus, setMessageStatus] = useState({
+    status: "idle",
+    text: "",
+  });
   // Split the second input value by comma and trim spaces to create badges
   const accounts = targetAccounts
     .split(",")
     .map((item) => item.trim())
     .filter((item) => item !== "");
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const message = formData.get("directMessage") as string;
+    setMessageStatus({ status: "pending", text: "Sending..." });
+
+    try {
+      await sendDm({ targetAccounts: accounts, message });
+      setMessageStatus({
+        status: "success",
+        text: "Messages sent successfully!",
+      });
+    } catch (error) {
+      setMessageStatus({ status: "error", text: "Failed to send messages." });
+    }
+  };
+
   return (
     <div className="flex h-screen items-center justify-center bg-gray-100">
       <form
-        action={async (formData) => {
-          const message = formData.get("directMessage") as string;
-          console.log("This is the message " + message);
-          await sendDm({ targetAccounts: accounts, message });
-        }}
+        onSubmit={handleSubmit}
         className="rounded-lg bg-white p-8 shadow-lg"
       >
         <div className="mb-4">
@@ -66,6 +82,13 @@ export default function DirectMessage() {
         >
           Button
         </button>
+        {messageStatus.status !== "idle" && (
+          <div
+            className={`mt-4 text-sm font-semibold ${messageStatus.status === "success" ? "text-green-500" : "text-red-500"}`}
+          >
+            {messageStatus.text}
+          </div>
+        )}
       </form>
     </div>
   );

@@ -10,7 +10,7 @@ export const databaseRouter = createTRPCRouter({
         username: z.string(),
         password: z.string(),
         proxy: z.string(),
-        sessionID: z.string(),
+        sessionid: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
