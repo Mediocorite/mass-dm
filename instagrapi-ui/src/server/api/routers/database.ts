@@ -1,24 +1,19 @@
-// This is the file for interacting with external accounts
-
-import axios from "axios";
+// Saving anything to local db
 import { z } from "zod";
-import { env } from "~/env";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 
-export const exAccRouter = createTRPCRouter({
+export const databaseRouter = createTRPCRouter({
   addExternalAcc: protectedProcedure
     .input(
       z.object({
-        email: z.string().email(),
+        username: z.string(),
         password: z.string(),
         proxy: z.string(),
+        sessionID: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const checkValidity = await axios.post(env.REST_API_URL + "/auth/login");
-      console.log("This is the checkValidity");
-      console.log(JSON.stringify(checkValidity));
       return ctx.db.externalAccount.create({
         data: input,
       });

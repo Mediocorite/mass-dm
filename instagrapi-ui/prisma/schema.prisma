@@ -68,7 +68,7 @@ model User {
 model ExternalAccount {
   id       Int     @id @default(autoincrement())
   proxy    String
-  email    String  @unique
+  username    String  @unique
   password String
   // If each ExternalAccount is associated with a User
   userId   String?

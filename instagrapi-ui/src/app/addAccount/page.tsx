@@ -1,8 +1,8 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
 import { api } from "~/trpc/react";
-
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 const colors = [
   "bg-red-500",
   "bg-blue-500",
@@ -17,27 +17,53 @@ export default function AddAccount() {
     data: accounts,
     isLoading,
     refetch,
-  } = api.exAcc.listAllExternalAcc.useQuery();
+  } = api.database.listAllExternalAcc.useQuery();
 
-  const { mutate: addAccount } = api.exAcc.addExternalAcc.useMutation({
+  const { mutateAsync: instagramLogin } =
+    api.account.instagramLogin.useMutation({
+      onSuccess: () => {
+        toast.success("Account successfully added!");
+      },
+      onError: (error) => {
+        toast.error(
+          error?.message || "An error occurred while adding the account.",
+        );
+      },
+    });
+
+  const { mutate: addAccount } = api.database.addExternalAcc.useMutation({
+    onSuccess: () => {
+      refetch();
+      toast.success("Account successfully added!");
+    },
+    onError: (error) => {
+      toast.error(
+        error?.message || "An error occurred while adding the account.",
+      );
+    },
+  });
+
+  const { mutate: deleteAccount } = api.database.removeAccByID.useMutation({
     onSuccess: () => {
       refetch();
     },
   });
 
-  const { mutate: deleteAccount } = api.exAcc.removeAccByID.useMutation({
-    onSuccess: () => {
-      refetch();
-    },
-  });
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const email = formData.get("email") as string;
+    const username = formData.get("username") as string;
     const password = formData.get("password") as string;
     const proxy = formData.get("proxy") as string;
-    addAccount({ email, password, proxy });
+    try {
+      const sessionID = await instagramLogin({ username, password, proxy });
+      addAccount({ username, password, proxy, sessionID });
+    } catch (error) {
+      console.error("Failed to login:", error);
+      toast.error(
+        JSON.stringify(error) || "An error occurred while adding the account.",
+      );
+    }
   };
 
   return (
@@ -77,7 +103,7 @@ export default function AddAccount() {
                         </div>
                       </div>
                       <div className="flex flex-col items-start justify-center p-4">
-                        <span className="font-semibold">{data.email}</span>
+                        <span className="font-semibold">{data.username}</span>
                         <span>Proxy: {data.proxy}</span>
                       </div>
                     </div>
@@ -94,17 +120,17 @@ export default function AddAccount() {
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div className="-space-y-px rounded-md shadow-sm">
                   <div>
-                    <label htmlFor="email-address" className="sr-only">
-                      Email address
+                    <label htmlFor="username" className="sr-only">
+                      Email address or Username
                     </label>
                     <input
-                      id="email-address"
-                      name="email"
-                      type="email"
-                      autoComplete="email"
+                      id="username"
+                      name="username"
+                      type="text"
+                      autoComplete="username"
                       required
                       className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-                      placeholder="Email address"
+                      placeholder="Username or Email"
                     />
                   </div>
                   <div>
@@ -143,7 +169,6 @@ export default function AddAccount() {
                     className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                   >
                     <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                      {/* Heroicon name: solid/lock-closed */}
                       <svg
                         className="h-5 w-5 text-indigo-500 group-hover:text-indigo-400"
                         xmlns="http://www.w3.org/2000/svg"
@@ -176,6 +201,7 @@ export default function AddAccount() {
           </div>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 }
