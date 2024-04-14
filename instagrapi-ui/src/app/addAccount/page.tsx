@@ -38,8 +38,8 @@ export default function AddAccount() {
     });
 
   const { mutate: addAccount } = api.database.addExternalAcc.useMutation({
-    onSuccess: () => {
-      refetch();
+    onSuccess: async () => {
+      await refetch();
       toast.success("Account successfully added!");
     },
     onError: (error) => {
@@ -50,8 +50,13 @@ export default function AddAccount() {
   });
 
   const { mutate: deleteAccount } = api.database.removeAccByID.useMutation({
-    onSuccess: () => {
-      refetch();
+    onSuccess: async () => {
+      await refetch();
+      toast.success("Account successfully deleted!");
+    },
+    onError: (error) => {
+      console.error("Failed to delete account:", error);
+      toast.error("Failed to delete account.");
     },
   });
 
@@ -63,13 +68,22 @@ export default function AddAccount() {
     const proxy = formData.get("proxy") as string;
     try {
       const sessionid = await instagramLogin({ username, password, proxy });
-      addAccount({ username, password, proxy, sessionid });
+      addAccount({
+        username,
+        password,
+        proxy,
+        sessionid,
+      });
     } catch (error) {
       console.error("Failed to login:", error);
       toast.error(
         JSON.stringify(error) || "An error occurred while adding the account.",
       );
     }
+  };
+
+  const handleDeleteAccount = (id: number) => {
+    deleteAccount({ id });
   };
 
   return (
@@ -114,7 +128,7 @@ export default function AddAccount() {
                       </div>
                     </div>
                     <span
-                      onClick={() => deleteAccount({ id: data?.id })}
+                      onClick={() => handleDeleteAccount(data?.id)}
                       className="cursor-pointer text-4xl"
                     >
                       ❌

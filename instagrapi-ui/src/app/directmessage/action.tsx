@@ -11,11 +11,6 @@ interface Account {
   sessionid: string;
 }
 
-interface GetAccountID {
-  sessionID: string;
-  username: string;
-}
-
 interface DMinfo {
   message: string;
   targetAccounts: string[];
@@ -23,7 +18,7 @@ interface DMinfo {
 
 export async function sendDm(dmInfo: DMinfo) {
   const accounts: Account[] = await api.database.listAllExternalAcc();
-  const targetAccountIDs: string[] = await Promise.all(
+  const targetAccountIDs = await Promise.all(
     dmInfo.targetAccounts.map(async (target, index) => {
       const sessionID = accounts[index % accounts.length]?.sessionid;
       if (sessionID) {
@@ -40,7 +35,7 @@ export async function sendDm(dmInfo: DMinfo) {
       }
       return null;
     }),
-  ).then((ids) => ids.filter((id) => id !== null));
+  ).then((ids) => ids.filter((id): id is string => id !== null));
   const maxUsersPerSession = 50;
   let sessionIndex = 0;
   let userCount = 0;

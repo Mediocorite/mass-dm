@@ -4,7 +4,6 @@ import { z } from "zod";
 import { env } from "~/env";
 import { default as qs } from "qs";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-
 export const messageRouter = createTRPCRouter({
   sendDMtoUser: protectedProcedure
     .input(
@@ -21,7 +20,7 @@ export const messageRouter = createTRPCRouter({
         proxy: input.user_ids,
       });
       try {
-        const response = await axios({
+        const response = await axios<boolean>({
           method: "post",
           url: `${env.REST_API_URL}/user/direct_send`,
           headers: {

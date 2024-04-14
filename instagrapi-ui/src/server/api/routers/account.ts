@@ -1,11 +1,17 @@
 // Saving anything to local db
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { z } from "zod";
 import { env } from "~/env";
 import { default as qs } from "qs";
 
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+interface LoginResponse {
+  sessionID: string;
+}
 
+interface UserIDResponse {
+  pk: string;
+}
 export const accountRouter = createTRPCRouter({
   instagramLogin: protectedProcedure
     .input(
@@ -15,21 +21,22 @@ export const accountRouter = createTRPCRouter({
         proxy: z.string(),
       }),
     )
-    .mutation(async ({ ctx, input }): Promise<string> => {
+    .mutation(async ({ input }): Promise<string> => {
       const formData = qs.stringify({
         username: input.username,
         password: input.password,
         proxy: input.proxy,
       });
       try {
-        const response = await axios({
-          method: "post",
-          url: `${env.REST_API_URL}/auth/login`,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+        const response = await axios.post<LoginResponse>(
+          `${env.REST_API_URL}/auth/login`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
           },
-          data: formData,
-        });
+        );
         if (
           response.status === 200 &&
           response.data &&
@@ -57,20 +64,21 @@ export const accountRouter = createTRPCRouter({
         username: z.string(),
       }),
     )
-    .query(async ({ input }) => {
+    .mutation(async ({ input }): Promise<string> => {
       const formData = qs.stringify({
         sessionid: input.sessionID,
         username: input.username,
       });
       try {
-        const response = await axios({
-          method: "post",
-          url: `${env.REST_API_URL}/user/id_from_username`,
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+        const response = await axios.post<UserIDResponse>(
+          `${env.REST_API_URL}/user/id_from_username`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
           },
-          data: formData,
-        });
+        );
         if (
           response.status === 200 &&
           response.data &&
